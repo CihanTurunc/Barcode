@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_sqflite_project/models/note.dart';
 import 'package:flutter_sqflite_project/utils/database_helper.dart';
 import 'package:intl/intl.dart';
@@ -15,8 +16,6 @@ class NoteDetail extends StatefulWidget {
 }
 
 class NoteDetailState extends State<NoteDetail> {
-  static var _priorities = ["Yüksek", "Normal"];
-
   DatabaseHelper helper = DatabaseHelper();
 
   String appBarTitle;
@@ -51,40 +50,16 @@ class NoteDetailState extends State<NoteDetail> {
           padding: EdgeInsets.only(top: 15.0, left: 10.0, right: 10.0),
           child: ListView(
             children: [
-              ListTile(
-                  title: DropdownButton(
-                      hint: Text('Seç'),
-                      items: _priorities.map((String dropDownStringItem) {
-                        return DropdownMenuItem<String>(
-                          value: dropDownStringItem,
-                          child: Text(dropDownStringItem),
-                        );
-                      }).toList(),
-                      style: textStyle,
-                      value: getPriorityAsString(note.priority),
-                      onChanged: (valueSelectedByUser) {
-                        setState(() {
-                          debugPrint("User selected $valueSelectedByUser");
-                          updatePriorityAsInt(valueSelectedByUser);
-                        });
-                      })),
-
               //Second Element
               Padding(
                 padding: EdgeInsets.only(top: 15.0, bottom: 15.0),
-                child: TextField(
-                  controller: titleController,
-                  style: textStyle,
-                  onChanged: (value) {
-                    debugPrint("Something changed in Title Text Field");
-                    updateTitle();
-                  },
-                  decoration: InputDecoration(
-                      labelText: "Başlık",
-                      labelStyle: textStyle,
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5.0))),
+
+                child: TextButton(
+                  onPressed: () => ReadCode(),
+                  child: Text("Scan Barcode"),
                 ),
+
+               
               ),
 
               //Third Element
@@ -162,35 +137,9 @@ class NoteDetailState extends State<NoteDetail> {
     Navigator.pop(context, true);
   }
 
-  //Convert the String priority in the form of integer before saving it to Db
-  void updatePriorityAsInt(String value) {
-    switch (value) {
-      case "Yüksek":
-        note.priority = 1;
-        break;
-      case "Normal":
-        note.priority = 2;
-        break;
-    }
-  }
-
-  //Convert int priority to String and display it to user in DropDown
-  String getPriorityAsString(int value) {
-    String priority;
-    switch (value) {
-      case 1:
-        priority = _priorities[0]; //High
-        break;
-      case 2:
-        priority = _priorities[1]; //Low
-        break;
-    }
-    return priority;
-  }
-
   //Update the title of Note object
   void updateTitle() {
-    note.title = titleController.text;
+    note.title = ReadCode().toString();
   }
 
   //Update the description of Note object
@@ -242,5 +191,11 @@ class NoteDetailState extends State<NoteDetail> {
       content: Text(message),
     );
     showDialog(context: context, builder: (_) => alertDialog);
+  }
+
+  Future<String> ReadCode() async {
+    String barCode = await FlutterBarcodeScanner.scanBarcode(
+        "#000000", "Cancel", true, ScanMode.BARCODE);
+    note.title = barCode;
   }
 }

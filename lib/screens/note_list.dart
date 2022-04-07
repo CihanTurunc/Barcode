@@ -1,8 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_sqflite_project/models/note.dart';
 import 'package:flutter_sqflite_project/screens/note_detail.dart';
 import 'package:flutter_sqflite_project/utils/database_helper.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 class NoteList extends StatefulWidget {
@@ -28,15 +30,23 @@ class NoteListState extends State<NoteList> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Notlar"),
+        title: Text("Ürünler"),
+        actions: [
+          IconButton(
+            onPressed: () {
+              DosyayaYaz();
+            },
+            icon: Icon(Icons.print),
+          ),
+        ],
       ),
       body: getNoteListView(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           debugPrint("FAB clicked");
-          navigateToDetail(Note("", "", 2), "Not Ekle");
+          navigateToDetail(Note("", ""), "Ürün Ekle");
         },
-        tooltip: "Not Ekle",
+        tooltip: "Ürün Ekle",
         child: Icon(Icons.add),
       ),
     );
@@ -52,16 +62,11 @@ class NoteListState extends State<NoteList> {
               color: Colors.white,
               elevation: 2.0,
               child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor:
-                      getPriorityColor(this.noteList[position].priority),
-                  child: getPriorityIcon(this.noteList[position].priority),
-                ),
                 title: Text(
                   this.noteList[position].title,
                   style: titleStyle,
                 ),
-                subtitle: Text(this.noteList[position].date),
+                subtitle: Text(this.noteList[position].description + " adet"),
                 trailing: GestureDetector(
                   child: Icon(
                     Icons.delete,
@@ -69,45 +74,17 @@ class NoteListState extends State<NoteList> {
                   ),
                   onTap: () {
                     debugPrint("ListTile Tapped");
-                    navigateToDetail(this.noteList[position], "Notu Düzenle");
+                    navigateToDetail(this.noteList[position], "Ürünü Düzenle");
                   },
                 ),
               ));
         });
   }
 
-  //Returns the priority color
-  Color getPriorityColor(int priority) {
-    switch (priority) {
-      case 1:
-        return Colors.red;
-        break;
-      case 2:
-        return Colors.yellow;
-        break;
-      default:
-        return Colors.yellow;
-    }
-  }
-
-  //Returns the priority icon
-  Icon getPriorityIcon(int priority) {
-    switch (priority) {
-      case 1:
-        return Icon(Icons.play_arrow);
-        break;
-      case 2:
-        return Icon(Icons.keyboard_arrow_right);
-        break;
-      default:
-        return Icon(Icons.keyboard_arrow_right);
-    }
-  }
-
   void _delete(BuildContext context, Note note) async {
     int result = await databaseHelper.deleteNote(note.id);
     if (result != 0) {
-      _showSnackBar(context, "Not Başarıyla Silindi");
+      _showSnackBar(context, "Ürün Başarıyla Silindi");
       updateListView();
     }
   }
@@ -139,5 +116,12 @@ class NoteListState extends State<NoteList> {
         });
       });
     });
+  }
+
+  DosyayaYaz() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/my_file.txt');
+    await file.writeAsString(noteList.toString());
+    print('saved');
   }
 }
